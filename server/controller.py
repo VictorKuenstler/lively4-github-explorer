@@ -5,6 +5,7 @@ from peewee import DoesNotExist, Model
 from playhouse.shortcuts import model_to_dict
 
 import server.models as models
+from server.common import snake_to_camel, camel_to_snake
 
 api = responder.API()
 
@@ -14,13 +15,13 @@ def model_list(req, resp):
     response = []
     for name, obj in inspect.getmembers(models):
         if inspect.isclass(obj) and issubclass(obj, Model) and obj != Model:
-            response.append(name.lower())
+            response.append(camel_to_snake(name))
     resp.media = response
 
 
 @api.route('/models/{model_name}')
 def model_multiple(req, resp, model_name):
-    model_name = model_name.capitalize()
+    model_name = snake_to_camel(model_name)
     if hasattr(models, model_name):
         model = getattr(models, model_name)
         if inspect.isclass(model) and issubclass(model, Model) and model != Model:
