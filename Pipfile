@@ -5,6 +5,9 @@ name = "pypi"
 
 [packages]
 responder = "*"
+python-dotenv = "*"
+peewee = "*"
+"psycopg2" = "*"
 
 [dev-packages]
 

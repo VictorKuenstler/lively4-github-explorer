@@ -1,15 +1,20 @@
-from psycopg2.sql import SQL
 import responder
+from playhouse.shortcuts import model_to_dict
 
-from server.postgres.postgres_db import PostgresDbDictCursor
+from server.models import Project
 
 api = responder.API()
 
-@api.route('/test')
-def test(req, resp):
-    with PostgresDbDictCursor() as cursor:
-        query = SQL('SELECT * FROM table_sizes')
-        cursor.execute(query)
-        response = [dict(row) for row in cursor]
 
-    resp.media = response
+@api.route('/project')
+def projects(req, resp):
+    query = Project.select().limit(1000)
+
+    resp.media = [model_to_dict(project) for project in query.select()]
+
+
+@api.route('/project/{id}')
+def project(req, resp, id):
+    project = Project.get(Project.id == id)
+
+    resp.media = model_to_dict(project)
