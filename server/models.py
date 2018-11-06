@@ -1,21 +1,11 @@
 import os
-from peewee import Model, PostgresqlDatabase, TextField
+from peewee import Model, PostgresqlDatabase, TextField, ForeignKeyField
 
 dbname = os.environ['PSQL_NAME']
 user = os.environ['PSQL_USER']
 password = os.environ['PSQL_PASSWORD']
 
 db = PostgresqlDatabase(dbname, user=user, password=password)
-
-
-class Project(Model):
-    url = TextField()
-    name = TextField()
-    description = TextField()
-
-    class Meta:
-        database = db
-        table_name = 'projects'
 
 
 class User(Model):
@@ -28,3 +18,14 @@ class User(Model):
     class Meta:
         database = db
         table_name = 'users'
+
+
+class Project(Model):
+    url = TextField()
+    owner = ForeignKeyField(User, backref='projects')
+    name = TextField()
+    description = TextField()
+
+    class Meta:
+        database = db
+        table_name = 'projects'
