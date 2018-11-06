@@ -1,6 +1,5 @@
 import os
-
-from peewee import PostgresqlDatabase, Model, CharField, TextField
+from peewee import Model, PostgresqlDatabase, TextField
 
 dbname = os.environ['PSQL_NAME']
 user = os.environ['PSQL_USER']
@@ -17,3 +16,15 @@ class Project(Model):
     class Meta:
         database = db
         table_name = 'projects'
+
+
+class User(Model):
+    login = TextField(unique=True, index=True)
+    company = TextField()
+    state = TextField()
+    city = TextField()
+    location = TextField
+
+    class Meta:
+        database = db
+        table_name = 'users'
