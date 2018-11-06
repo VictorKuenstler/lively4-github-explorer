@@ -25,7 +25,7 @@ def model_multiple(req, resp, model_name):
         model = getattr(models, model_name)
         if inspect.isclass(model) and issubclass(model, Model) and model != Model:
             query = model.select().limit(1000)
-            resp.media = [model_to_dict(item) for item in query]
+            resp.media = [model_to_dict(item, recurse=False) for item in query]
             return
 
     resp.status_code = api.status_codes.HTTP_404
@@ -39,7 +39,7 @@ def model_single(req, resp, model_name, id):
         if inspect.isclass(model) and issubclass(model, Model) and model != Model:
             try:
                 item = model.get(model.id == id)
-                resp.media = model_to_dict(item)
+                resp.media = model_to_dict(item, backrefs=True, max_depth=1)
                 return
             except (ValueError, DoesNotExist):
                 pass
