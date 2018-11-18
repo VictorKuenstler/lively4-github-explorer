@@ -1,0 +1,41 @@
+# Basic Types #
+# =========== #
+<ModelCommand>       ::= MODEL:
+<JoinCommand>        ::= JOINON:
+<AliasCommand>       ::= ALIAS:
+<SelectCommand>      ::= SELECT:
+<GroupCommand>       ::= GROUPBY:
+<OrderCommand>       ::= ORDERBY:
+<WhereCommand>       ::= WHERE:
+<Aggregator>         ::= SUM:|AVG:|COUNT:|MIN:|MAX:
+<Integer>            ::= -?[1-9][0-9]*
+<String>             ::= (["'])(?:(?=(\\?))\2.)*?\1
+<Identifier>         ::= [a-zA-Z][a-zA-Z0-9_]*
+<Comparator>         ::= ==|>=|<=|>|<|!=
+<LogicalOperator>    ::= AND|OR|XOR
+<LeftBracket>        ::= \(
+<RightBracket>       ::= \)
+<Dot>                ::= \.
+<Comma>              ::= ,
+
+# Combined Types #
+# ============== #
+<AliasName>          ::= <Identifier>
+<ModelName>          ::= <Identifier>
+<FieldName>          ::= <Identifier>
+<Field>              ::= <ModelName> <Dot> <FieldName> | <FieldName>
+
+<Aggregation>        ::= <Aggregator> <Field>
+
+<Comparision>        ::= <Field> <Comparator> <Field> | <Field> <Comparator> <Integer> | <Field> <Comparator> <String>
+<Expression>         ::= <Comparision> | <LeftBracket> <Expression> <RightBracket> | <Expression> <LogicalOperator> <Expression>
+
+<Alias>              ::= <AliasCommand> <AliasName>
+<Model>              ::= <ModelCommand> <ModelField> <Alias>?
+<Join>               ::= <JoinCommand> <Field> <Alias>?
+<Select>             ::= <SelectCommand> <LeftBracket> (<Field> | <Aggregation>) (<Comma> (<Field> | <Aggregation>))* <RightBracket>
+<GroupBy>            ::= <GroupCommand> <LeftBracket> <Field> (<Comma> <Field>)* <RightBracket>
+<OrderBy>            ::= <OrderCommand> <LeftBracket> <Field> (<Comma> <Field>)* <RightBracket>
+<Where>              ::= <WhereCommand> <Expression>
+
+<Query>              ::= <Model> <Join>* <Select> <GroupBy>? <OrderBy>? <Where>?

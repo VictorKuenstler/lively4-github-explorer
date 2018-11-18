@@ -8,6 +8,8 @@ responder = "*"
 python-dotenv = "*"
 peewee = "*"
 "psycopg2" = "*"
+"pypeg2" = "*"
+pytest = "*"
 
 [dev-packages]
 
