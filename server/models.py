@@ -1,8 +1,12 @@
 from peewee import CompositeKey, ForeignKeyField, IntegerField, Model, TextField
 
 from server.database import db
+from server.model_register import ModelRegister
+
+mr = ModelRegister()
 
 
+@mr.add_model
 class User(Model):
     login = TextField(unique=True)
     company = TextField()
@@ -15,6 +19,7 @@ class User(Model):
         table_name = 'users'
 
 
+@mr.add_model
 class Project(Model):
     url = TextField(unique=True)
     owner = ForeignKeyField(User, backref='projects')
@@ -27,6 +32,7 @@ class Project(Model):
         table_name = 'projects'
 
 
+@mr.add_model
 class Commit(Model):
     sha = TextField(unique=True)
     author = ForeignKeyField(User, backref='authored_commits')
@@ -57,6 +63,7 @@ class CommitRelationship(Model):
         primary_key = CompositeKey('parent', 'child')
 
 
+@mr.add_model
 class Comment(Model):
     commit = ForeignKeyField(Commit, backref='comments')
     author = ForeignKeyField(User, column_name='user_id', backref='comments')
