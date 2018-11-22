@@ -15,8 +15,8 @@ def model_list(req, resp):
 @api.route('/models/{model_name}')
 def multiple_models(req, resp, model_name):
     model_name = model_name.lower()
-    if model_name in mr.models:
-        model = mr.models[model_name]
+    if model_name in mr:
+        model = mr[model_name]
         query = model.select().limit(1000)
         resp.media = [model_to_dict(item, recurse=False) for item in query]
     else:
@@ -26,12 +26,8 @@ def multiple_models(req, resp, model_name):
 @api.route('/models/{model_name}/{id}')
 def model_single(req, resp, model_name, id):
     model_name = model_name.lower()
-    print(model_name)
-    print(id)
-    print(mr.models)
-    if model_name in mr.models:
-        model = mr.models[model_name]
-        print(model)
+    if model_name in mr:
+        model = mr[model_name]
         try:
             item = model.get(model.id == id)
             resp.media = model_to_dict(item, backrefs=True, max_depth=1)
