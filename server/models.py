@@ -1,11 +1,6 @@
-import os
-from peewee import CompositeKey, ForeignKeyField, IntegerField, Model, PostgresqlDatabase, TextField
+from peewee import CompositeKey, ForeignKeyField, IntegerField, Model, TextField
 
-db_name = os.environ['PSQL_NAME']
-user = os.environ['PSQL_USER']
-password = os.environ['PSQL_PASSWORD']
-
-db = PostgresqlDatabase(db_name, user=user, password=password)
+from server.database import db
 
 
 class User(Model):
