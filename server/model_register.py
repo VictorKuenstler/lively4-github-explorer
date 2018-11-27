@@ -27,7 +27,7 @@ def _model_relations(cls):
         assert hasattr(field.rel_model, '_type') and field.rel_model._type == 'model'
 
         rel_model = field.rel_model._name
-        field_dict = {'type': 'rel', 'relationship_type': 'n:1', 'rel_model': rel_model}
+        field_dict = {'type': 'n:1', 'rel_model': rel_model}
         relations[field_name] = field_dict
     for backref, backref_model in cls._meta.backrefs.items():
         assert hasattr(backref_model, '_name')
@@ -38,9 +38,9 @@ def _model_relations(cls):
         backref_type = backref_model._type
 
         if backref_type == 'model':
-            field_dict = {'type': 'rel', 'relationship_type': '1:n', 'rel_model': backref_name}
+            field_dict = {'type': '1:n', 'rel_model': backref_name}
         else:
-            field_dict = {'type': 'rel', 'relationship_type': 'n:m', 'rel_model': backref_model._other(cls._name)}
+            field_dict = {'type': 'n:m', 'rel_model': backref_model._other(cls._name)}
         relations[backref.backref] = field_dict
 
     return relations
@@ -113,5 +113,5 @@ class ModelRegister:
     def model_descriptions(self):
         result = {}
         for model in self.models:
-            result[model._name] = {**model._fields(), **model._relations()}
+            result[model._name] = {'fields': model._fields(), 'relations': model._relations()}
         return result
