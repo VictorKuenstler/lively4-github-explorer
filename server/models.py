@@ -43,9 +43,10 @@ class Commit(Model):
         table_name = 'commits'
 
 
-class ProjectCommit(Model):
-    project = ForeignKeyField(Project, backref='project_commits')
-    commit = ForeignKeyField(Commit, backref='project_commits')
+@mr.add_nm
+class ProjectCommitRelationship(Model):
+    project = ForeignKeyField(Project, backref='commits')
+    commit = ForeignKeyField(Commit, backref='projects')
 
     class Meta:
         database = db
@@ -53,6 +54,7 @@ class ProjectCommit(Model):
         primary_key = CompositeKey('project', 'commit')
 
 
+@mr.add_nm
 class CommitRelationship(Model):
     parent = ForeignKeyField(Commit, backref='children')
     child = ForeignKeyField(Commit, column_name='commit_id', backref='parents')

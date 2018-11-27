@@ -35,3 +35,8 @@ def model_single(req, resp, model_name, id):
         except (ValueError, DoesNotExist):
             pass
     resp.status_code = api.status_codes.HTTP_404
+
+
+@api.route('/meta')
+def meta(req, resp):
+    resp.media = mr.model_descriptions
