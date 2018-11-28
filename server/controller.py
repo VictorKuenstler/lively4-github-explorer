@@ -29,8 +29,8 @@ def model_single(req, resp, model_name, id):
     if model_name in mr:
         model = mr[model_name]
         try:
-            item = model.get(model.id == id)
-            resp.media = model_to_dict(item, backrefs=True, max_depth=1)
+            query = model.get(model.id == id)
+            resp.media = mr.query_dict(query, 1)
             return
         except (ValueError, DoesNotExist):
             pass

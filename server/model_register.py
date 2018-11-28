@@ -40,29 +40,30 @@ def _model_relations(cls):
         if backref_type == 'model':
             field_dict = {'type': '1:n', 'rel_model': backref_name}
         else:
-            field_dict = {'type': 'n:m', 'rel_model': backref_model._other(cls._name)}
+            field_dict = {'type': 'n:m', 'rel_model': backref_model._other_relation(backref.name)[1]}
         relations[backref.backref] = field_dict
 
     return relations
 
 
-def _relationship_models(cls):
-    return [f.rel_model for f in cls._meta.fields.values()]
+def _relationship_relations(cls):
+    relations = {}
+    for field_name, field in cls._meta.fields.items():
+        rel_model = field.rel_model._name
+        relations[field_name] = rel_model
+    return relations
 
 
-def _relationship_model_names(cls):
-    return [m._name for m in cls._models()]
+def _relationship_other_relation(cls, relation):
+    relations = cls._relations()
+    relation_keys = list(relations.keys())
+    assert relation in relation_keys
 
-
-def _relationship_other(cls, model):
-    if isinstance(model, str):
-        model_names = cls._model_names()
-        assert model in model_names
-        return model_names[1] if model == model_names[0] else model_names[0]
+    if relation == relation_keys[0]:
+        index = 1
     else:
-        models = cls._models()
-        assert model in models
-        return models[1] if model is models[0] else models[0]
+        index = 0
+    return relation_keys[index], relations[relation_keys[index]]
 
 
 class ModelRegister:
@@ -83,14 +84,15 @@ class ModelRegister:
 
     def add_nm(self, nm_relationship):
         assert len(nm_relationship._meta.fields) == 2, 'nm-relationship must contain two fields.'
+        for field in nm_relationship._meta.fields.values():
+            assert field.__class__.__name__ == 'ForeignKeyField'
 
         name = camel_to_snake(nm_relationship.__name__)
 
         nm_relationship._name = name
         nm_relationship._type = 'nm_relationship'
-        nm_relationship._models = classmethod(_relationship_models)
-        nm_relationship._model_names = classmethod(_relationship_model_names)
-        nm_relationship._other = classmethod(_relationship_other)
+        nm_relationship._relations = classmethod(_relationship_relations)
+        nm_relationship._other_relation = classmethod(_relationship_other_relation)
 
         self._nm_relationships[name] = nm_relationship
         return nm_relationship
@@ -114,4 +116,37 @@ class ModelRegister:
         result = {}
         for model in self.models:
             result[model._name] = {'fields': model._fields(), 'relations': model._relations()}
+        return result
+
+    def query_dict(self, query, depth=0):
+        model_description = self.model_descriptions[query._meta.model._name]
+
+        result = {}
+        for field in model_description['fields'].keys():
+            result[field] = query.__data__.get(field)
+        if depth > 0:
+            for relation, relation_description in model_description['relations'].items():
+                relation_type = relation_description['type']
+                assert relation_type == 'n:1' or relation_type == '1:n' or relation_type == 'n:m'
+                if relation_type == 'n:1':
+                    if query.__data__.get(relation):
+                        relation_query = getattr(query, relation)
+                        result[relation] = self.query_dict(relation_query, depth - 1)
+                    else:
+                        result[relation] = None
+                elif relation_type == '1:n':
+                    relation_queries = getattr(query, relation)
+                    accum = []
+                    for relation_query in relation_queries:
+                        accum.append(self.query_dict(relation_query, depth - 1))
+                    result[relation] = accum
+                else:
+                    relation_queries = getattr(query, relation)
+                    relation_model_1 = relation_queries._where.lhs.name
+                    relation_model_2 = relation_queries.model._other_relation(relation_model_1)[0]
+                    accum = []
+                    for relation_query in relation_queries:
+                        relation_query = getattr(relation_query, relation_model_2)
+                        accum.append(self.query_dict(relation_query, depth - 1))
+                    result[relation] = accum
         return result
