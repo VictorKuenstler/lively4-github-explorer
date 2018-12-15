@@ -2,22 +2,23 @@ from server.common import camel_to_snake
 
 
 def _model_fields(cls):
-    fields = {}
+    fields = []
     for field_name, field in cls._meta.fields.items():
         field_type = field.__class__.__name__
         if field_type == 'ForeignKeyField':
             continue
-        field_dict = {'type': field_type}
+        field_dict = {'name': field_name, 'type': field_type}
         if field.primary_key:
             field_dict['primary_key'] = True
         if field.unique:
             field_dict['unique'] = True
-        fields[field_name] = field_dict
+        fields.append(field_dict)
+
     return fields
 
 
 def _model_relations(cls):
-    relations = {}
+    relations = []
     for field_name, field in cls._meta.fields.items():
         field_type = field.__class__.__name__
         if field_type != 'ForeignKeyField':
@@ -27,8 +28,7 @@ def _model_relations(cls):
         assert hasattr(field.rel_model, '_type') and field.rel_model._type == 'model'
 
         rel_model = field.rel_model._name
-        field_dict = {'type': 'n:1', 'rel_model': rel_model}
-        relations[field_name] = field_dict
+        relations.append({'name': field_name, 'type': 'n:1', 'rel_model': rel_model})
     for backref, backref_model in cls._meta.backrefs.items():
         assert hasattr(backref_model, '_name')
         assert hasattr(backref_model, '_type')
@@ -37,11 +37,14 @@ def _model_relations(cls):
         backref_name = backref_model._name
         backref_type = backref_model._type
 
+        relation_dict = {'name': backref.backref}
         if backref_type == 'model':
-            field_dict = {'type': '1:n', 'rel_model': backref_name}
+            relation_dict['type'] = '1:n'
+            relation_dict['rel_model'] = backref_name
         else:
-            field_dict = {'type': 'n:m', 'rel_model': backref_model._other_relation(backref.name)[1]}
-        relations[backref.backref] = field_dict
+            relation_dict['type'] = 'n:m'
+            relation_dict['rel_model'] = backref_model._other_relation(backref.name)[1]
+        relations.append(relation_dict)
 
     return relations
 
@@ -113,9 +116,9 @@ class ModelRegister:
 
     @property
     def model_descriptions(self):
-        result = {}
+        result = []
         for model in self.models:
-            result[model._name] = {'fields': model._fields(), 'relations': model._relations()}
+            result.append({'model': model._name, 'fields': model._fields(), 'relations': model._relations()})
         return result
 
     def query_dict(self, query, depth=0):
