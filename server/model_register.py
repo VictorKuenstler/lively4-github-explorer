@@ -102,11 +102,11 @@ class ModelRegister:
 
     @property
     def models(self):
-        return [model for model in self._models.values()]
+        return list(self._models.values())
 
     @property
     def model_names(self):
-        return [model._name for model in self.models]
+        return list(self._models.keys())
 
     def __contains__(self, item):
         return item in self._models
@@ -114,42 +114,41 @@ class ModelRegister:
     def __getitem__(self, item):
         return self._models[item]
 
-    @property
-    def model_descriptions(self):
-        result = []
-        for model in self.models:
-            result.append({'model': model._name, 'fields': model._fields(), 'relations': model._relations()})
-        return result
+    def model_description(self, name):
+        model = self._models[name]
+        return {'model': model._name, 'fields': model._fields(), 'relations': model._relations()}
 
     def query_dict(self, query, depth=0):
-        model_description = self.model_descriptions[query._meta.model._name]
+        model_description = self.model_description(query._meta.model._name)
 
         result = {}
-        for field in model_description['fields'].keys():
-            result[field] = query.__data__.get(field)
+        for field in model_description['fields']:
+            result[field['name']] = query.__data__.get(field['name'])
         if depth > 0:
-            for relation, relation_description in model_description['relations'].items():
+            for relation_description in model_description['relations']:
+                relation_name = relation_description['name']
                 relation_type = relation_description['type']
                 assert relation_type == 'n:1' or relation_type == '1:n' or relation_type == 'n:m'
                 if relation_type == 'n:1':
-                    if query.__data__.get(relation):
-                        relation_query = getattr(query, relation)
-                        result[relation] = self.query_dict(relation_query, depth - 1)
+                    # if reference id is set, load referenced model
+                    if query.__data__.get(relation_name):
+                        relation_query = getattr(query, relation_name)
+                        result[relation_name] = self.query_dict(relation_query, depth - 1)
                     else:
-                        result[relation] = None
+                        result[relation_name] = None
                 elif relation_type == '1:n':
-                    relation_queries = getattr(query, relation)
+                    relation_queries = getattr(query, relation_name)
                     accum = []
                     for relation_query in relation_queries:
                         accum.append(self.query_dict(relation_query, depth - 1))
-                    result[relation] = accum
+                    result[relation_name] = accum
                 else:
-                    relation_queries = getattr(query, relation)
+                    relation_queries = getattr(query, relation_name)
                     relation_model_1 = relation_queries._where.lhs.name
                     relation_model_2 = relation_queries.model._other_relation(relation_model_1)[0]
                     accum = []
                     for relation_query in relation_queries:
                         relation_query = getattr(relation_query, relation_model_2)
                         accum.append(self.query_dict(relation_query, depth - 1))
-                    result[relation] = accum
+                    result[relation_name] = accum
         return result

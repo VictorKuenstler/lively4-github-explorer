@@ -23,13 +23,13 @@ def multiple_models(req, resp, model_name):
         resp.status_code = api.status_codes.HTTP_404
 
 
-@api.route('/models/{model_name}/{id}')
-def model_single(req, resp, model_name, id):
+@api.route('/models/{model_name}/{id_}')
+def model_single(req, resp, model_name, id_):
     model_name = model_name.lower()
     if model_name in mr:
         model = mr[model_name]
         try:
-            query = model.get(model.id == id)
+            query = model.get(model.id == id_)
             resp.media = mr.query_dict(query, 1)
             return
         except (ValueError, DoesNotExist):
@@ -39,4 +39,6 @@ def model_single(req, resp, model_name, id):
 
 @api.route('/meta')
 def meta(req, resp):
-    resp.media = mr.model_descriptions
+    resp.media = []
+    for model_name in mr.model_names:
+        resp.media.append(mr.model_description(model_name))
