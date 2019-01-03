@@ -4,12 +4,6 @@ from pypeg2 import *
 class ModelCommand(str):
     grammar = 'MODEL:'
 
-class JoinCommand(str):
-    grammar = 'JOINON:'
-
-class AliasCommand(str):
-    grammar = 'ALIAS:'
-
 class SelectCommand(str):
     grammar = 'SELECT:'
 
@@ -102,13 +96,6 @@ class LogicalOperator:
     def type(self):
         return type(self._type)
 
-class AliasName:
-    grammar = attr('_value', Identifier)
-
-    @property
-    def value(self):
-        return self._value.value
-
 class ModelName:
     grammar = attr('_value', Identifier)
 
@@ -117,26 +104,14 @@ class ModelName:
         return self._value.value
 
 class FieldName:
-    grammar = attr('_value', Identifier)
+    grammar = attr('_values', csl(Identifier, separator='.'))
 
     @property
-    def value(self):
-        return self._value.value
-
-class Field:
-    grammar = [(attr('_model', ModelName), '.', attr('_name', FieldName)), attr('_name', FieldName)]
-
-    @property
-    def model(self):
-        if hasattr(self, '_model'):
-            return self._model.value
-
-    @property
-    def name(self):
-        return self._name.value
+    def values(self):
+        return [v.value for v in self._values]
 
 class Aggregation:
-    grammar = attr('_aggregator', Aggregator), attr('field', Field)
+    grammar = attr('_aggregator', Aggregator), attr('field', FieldName)
 
     @property
     def aggregator(self):
@@ -144,11 +119,11 @@ class Aggregation:
 
 class Comparision:
     grammar = [
-        (attr('first', Field), attr('_comparator', Comparator), attr('second', Field)),
-        (attr('first', Field), attr('_comparator', Comparator), attr('second', Integer)),
-        (attr('first', Field), attr('_comparator', Comparator), attr('second', String)),
-        (attr('second', Integer), attr('_comparator', Comparator), attr('first', Field)),
-        (attr('second', String), attr('_comparator', Comparator), attr('first', Field))
+        (attr('first', FieldName), attr('_comparator', Comparator), attr('second', FieldName)),
+        (attr('first', FieldName), attr('_comparator', Comparator), attr('second', Integer)),
+        (attr('first', FieldName), attr('_comparator', Comparator), attr('second', String)),
+        (attr('second', Integer), attr('_comparator', Comparator), attr('first', FieldName)),
+        (attr('second', String), attr('_comparator', Comparator), attr('first', FieldName))
     ]
 
     @property
@@ -193,56 +168,27 @@ Expression.grammar.append(attr(
     ('(', Expression, ')', LogicalOperator, '(', Expression, ')')
 ))
 
-class Alias:
-    grammar = ignore(AliasCommand), attr('_name', AliasName)
-
-    @property
-    def name(self):
-        return self._name.value
-
 class Model:
-    grammar = ignore(ModelCommand), attr('_name', ModelName), attr('_alias', optional(Alias))
+    grammar = ignore(ModelCommand), attr('_name', ModelName)
 
     @property
     def name(self):
         return self._name.value
-
-    @property
-    def alias(self):
-        if self._alias:
-            return self._alias.name
-
-class Join:
-    grammar = ignore(JoinCommand), attr('_field', Field), attr('_alias', optional(Alias))
-
-    @property
-    def model(self):
-        return self._field.model
-
-    @property
-    def field(self):
-        return self._field.name
-
-    @property
-    def alias(self):
-        if self._alias:
-            return self._alias.name
 
 class Select(List):
-    grammar = ignore(SelectCommand), '(', csl([Aggregation, Field]), ')'
+    grammar = ignore(SelectCommand), '(', csl([Aggregation, FieldName]), ')'
 
 class GroupBy(List):
-    grammar = ignore(GroupCommand), '(', csl(Field), ')'
+    grammar = ignore(GroupCommand), '(', csl(FieldName), ')'
 
 class OrderBy(List):
-    grammar = ignore(OrderCommand), '(', csl(Field), ')'
+    grammar = ignore(OrderCommand), '(', csl(FieldName), ')'
 
 class Where(List):
     grammar = ignore(WhereCommand), attr('expression', Expression)
 
 class Query:
     grammar = attr('model', Model),\
-              attr('joins', maybe_some(Join)),\
               attr('select', Select),\
               attr('group_by', optional(GroupBy)),\
               attr('order_by', optional(OrderBy)),\

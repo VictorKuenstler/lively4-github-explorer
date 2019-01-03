@@ -1,8 +1,6 @@
 # Basic Types #
 # =========== #
 <ModelCommand>       ::= MODEL:
-<JoinCommand>        ::= JOINON:
-<AliasCommand>       ::= ALIAS:
 <SelectCommand>      ::= SELECT:
 <GroupCommand>       ::= GROUPBY:
 <OrderCommand>       ::= ORDERBY:
@@ -20,22 +18,18 @@
 
 # Combined Types #
 # ============== #
-<AliasName>          ::= <Identifier>
 <ModelName>          ::= <Identifier>
-<FieldName>          ::= <Identifier>
-<Field>              ::= <ModelName> <Dot> <FieldName> | <FieldName>
+<FieldName>          ::= <Identifier> (<Dot> <Identifier>)*
 
-<Aggregation>        ::= <Aggregator> <Field>
+<Aggregation>        ::= <Aggregator> <FieldName>
 
-<Comparision>        ::= <Field> <Comparator> <Field> | <Field> <Comparator> <Integer> | <Field> <Comparator> <String>
+<Comparision>        ::= <FieldName> <Comparator> <FieldName> | <FieldName> <Comparator> <Integer> | <FieldName> <Comparator> <String> | <Integer> <Comparator> <FieldName> | <String> <Comparator> <FieldName>
 <Expression>         ::= <Comparision> | <LeftBracket> <Expression> <RightBracket> | <Expression> <LogicalOperator> <Expression>
 
-<Alias>              ::= <AliasCommand> <AliasName>
-<Model>              ::= <ModelCommand> <ModelField> <Alias>?
-<Join>               ::= <JoinCommand> <Field> <Alias>?
-<Select>             ::= <SelectCommand> <LeftBracket> (<Field> | <Aggregation>) (<Comma> (<Field> | <Aggregation>))* <RightBracket>
-<GroupBy>            ::= <GroupCommand> <LeftBracket> <Field> (<Comma> <Field>)* <RightBracket>
-<OrderBy>            ::= <OrderCommand> <LeftBracket> <Field> (<Comma> <Field>)* <RightBracket>
+<Model>              ::= <ModelCommand> <ModelName>
+<Select>             ::= <SelectCommand> <LeftBracket> (<FieldName> | <Aggregation>) (<Comma> (<FieldName> | <Aggregation>))* <RightBracket>
+<GroupBy>            ::= <GroupCommand> <LeftBracket> <FieldName> (<Comma> <FieldName>)* <RightBracket>
+<OrderBy>            ::= <OrderCommand> <LeftBracket> <FieldName> (<Comma> <FieldName>)* <RightBracket>
 <Where>              ::= <WhereCommand> <Expression>
 
-<Query>              ::= <Model> <Join>* <Select> <GroupBy>? <OrderBy>? <Where>?
+<Query>              ::= <Model> <Select> <GroupBy>? <OrderBy>? <Where>?

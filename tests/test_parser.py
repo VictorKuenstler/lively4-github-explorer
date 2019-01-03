@@ -26,13 +26,25 @@ def test_identifier():
     with pytest.raises(SyntaxError):
         parse('abc.abc', Identifier)
 
-def test_field():
-    field = parse('abc', Field)
-    assert field.name == 'abc'
-    assert field.model is None
-    field = parse('Model.abc', Field)
-    assert field.model == 'Model'
-    assert field.name == 'abc'
+def test_model_name():
+    parse('abc', ModelName)
+    parse('abc2', ModelName)
+    parse('Abc', ModelName)
+    parse('AbcAbc', ModelName)
+    with pytest.raises(SyntaxError):
+        parse('1abc', ModelName)
+    with pytest.raises(SyntaxError):
+        parse('abc.abc', ModelName)
+
+def test_field_name():
+    field_name = parse('abc', FieldName)
+    assert field_name.values == ['abc']
+    field_name = parse('abc.def', FieldName)
+    assert field_name.values == ['abc', 'def']
+    field_name = parse('abc.def.ghi', FieldName)
+    assert field_name.values == ['abc', 'def', 'ghi']
+    with pytest.raises(SyntaxError):
+        parse('abc,def', FieldName)
 
 def test_aggregator():
     assert parse('SUM:', Aggregator).type is SumAggregator
@@ -46,11 +58,11 @@ def test_aggregator():
         parse('ABC:', Aggregator)
 
 def test_aggregation():
-    aggregation = parse('SUM: model.field', Aggregation)
+    aggregation = parse('SUM: field1.field2', Aggregation)
     assert aggregation.aggregator is SumAggregator
-    assert type(aggregation.field) is Field
-    assert aggregation.field.model == 'model'
-    assert aggregation.field.name == 'field'
+    assert type(aggregation.field) is FieldName
+    assert aggregation.field.values[0] == 'field1'
+    assert aggregation.field.values[1] == 'field2'
 
 def test_comparator():
     assert parse('==', Comparator).type is EqComparator
@@ -69,8 +81,7 @@ def test_comparision():
 
     comparision = parse('model.abc != "test_string"', Comparision)
     assert comparision.comparator is NeqComparator
-    assert comparision.first.model == 'model'
-    assert comparision.first.name == 'abc'
+    assert comparision.first.values == ['model', 'abc']
     assert comparision.second.value == 'test_string'
 
 def test_logical_operator():
@@ -81,8 +92,8 @@ def test_logical_operator():
 def test_expression():
     expression = parse('test == abc', Expression)
     assert expression.is_comparision
-    assert expression.first.name == 'test'
-    assert expression.second.name == 'abc'
+    assert expression.first.values[0] == 'test'
+    assert expression.second.values[0] == 'abc'
     assert expression.comparator is EqComparator
 
     assert expression.logical_operator is None
@@ -92,7 +103,7 @@ def test_expression():
 
     expression = parse('(test == "abc abv") AND ((test == 1) OR (abc <= abc))', Expression)
     assert expression.is_logical_expression
-    assert expression.first.first.name == 'test'
+    assert expression.first.first.values[0] == 'test'
     assert expression.first.second.value == 'abc abv'
     assert expression.logical_operator is AndOperator
 
@@ -100,76 +111,55 @@ def test_expression():
     assert nested_expression.logical_operator is OrOperator
     assert nested_expression.comparator is None
 
-def test_alias():
-    alias = parse('ALIAS: test1', Alias)
-    assert alias.name == 'test1'
-    with pytest.raises(SyntaxError):
-        parse('ALIAS: test.test', Alias)
-
 def test_model():
     model = parse('MODEL: model', Model)
     assert model.name == 'model'
-    assert model.alias is None
-
-    model = parse('MODEL: model2 ALIAS: model3', Model)
-    assert model.name == 'model2'
-    assert model.alias == 'model3'
-
-def test_join():
-    join = parse('JOINON: model.field ALIAS: abc', Join)
-    assert join.model == 'model'
-    assert join.field == 'field'
-    assert join.alias == 'abc'
-
-    join = parse('JOINON: model.field', Join)
-    assert join.alias is None
 
 def test_select():
-    select = parse('SELECT: (field1, model.field2, model2.field3, MIN: field4)', Select)
-    assert select[0].name == 'field1'
-    assert select[0].model is None
-    assert select[1].name == 'field2'
-    assert select[1].model == 'model'
-    assert select[2].name == 'field3'
-    assert select[2].model == 'model2'
+    select = parse('SELECT: (field1, field1.field2, field1.field2.field3, MIN: field4)', Select)
+    assert select[0].values[0] == 'field1'
+    assert select[1].values[0] == 'field1'
+    assert select[1].values[1] == 'field2'
+    assert select[2].values[0] == 'field1'
+    assert select[2].values[1] == 'field2'
+    assert select[2].values[2] == 'field3'
     assert select[3].aggregator is MinAggregator
-    assert select[3].field.name == 'field4'
+    assert select[3].field.values == ['field4']
 
 def test_group_by():
-    group_by = parse('GROUPBY: (field1, model.field2)', GroupBy)
-    assert group_by[0].name == 'field1'
-    assert group_by[0].model is None
-    assert group_by[1].name == 'field2'
-    assert group_by[1].model == 'model'
+    group_by = parse('GROUPBY: (field1, field1.field2)', GroupBy)
+    assert group_by[0].values == ['field1']
+    assert group_by[1].values == ['field1', 'field2']
 
     with pytest.raises(SyntaxError):
         parse('GROUPBY: (field1, SUM: field2)', GroupBy)
 
 def test_order_by():
-    group_by = parse('ORDERBY: (field1, model.field2)', OrderBy)
-    assert group_by[0].name == 'field1'
-    assert group_by[0].model is None
-    assert group_by[1].name == 'field2'
-    assert group_by[1].model == 'model'
+    order_by = parse('ORDERBY: (field1, field1.field2)', OrderBy)
+    assert order_by[0].values == ['field1']
+    assert order_by[1].values == ['field1', 'field2']
 
     with pytest.raises(SyntaxError):
         parse('ORDERBY: (field1, SUM: field2)', OrderBy)
 
 def test_where():
     where = parse('WHERE: abc <= "test"', Where)
-    assert where.expression.first.name == 'abc'
+    assert where.expression.first.values[0] == 'abc'
     assert where.expression.second.value == 'test'
-    parse('WHERE: (abc == 1) AND (abc <= "test")', Where)
+    where = parse('WHERE: (abc == 1) AND (abc.def <= "test")', Where)
+    assert where.expression.first.first.values[0] == 'abc'
+    assert where.expression.first.second.value == 1
+    assert where.expression.second.first.values[0] == 'abc'
+    assert where.expression.second.first.values[1] == 'def'
+    assert where.expression.second.second.value == 'test'
 
 def test_query():
     query_str = '''
-    MODEL: modelname ALIAS: modelalias1
-    JOINON: modelalias1.field ALIAS: modelalias2
-    JOINON: modelalias2.field2
+    MODEL: modelname
     SELECT: (
         abc,
         field2,
-        modelalias1.field3,
+        abc.field3,
         SUM: field.field
         )
     GROUPBY: (
@@ -181,39 +171,25 @@ def test_query():
 
     query = parse(query_str, Query)
     assert query.model.name == 'modelname'
-    assert query.model.alias == 'modelalias1'
-    assert len(query.joins) == 2
-    assert query.joins[0].model == 'modelalias1'
-    assert query.joins[0].field == 'field'
-    assert query.joins[0].alias == 'modelalias2'
-    assert query.joins[1].model == 'modelalias2'
-    assert query.joins[1].field == 'field2'
-    assert query.joins[1].alias is None
     assert len(query.select) == 4
-    assert query.select[0].model is None
-    assert query.select[0].name == 'abc'
-    assert query.select[1].name == 'field2'
-    assert query.select[2].name == 'field3'
+    assert query.select[0].values == ['abc']
+    assert query.select[1].values == ['field2']
+    assert query.select[2].values == ['abc', 'field3']
     assert query.select[3].aggregator is SumAggregator
-    assert query.select[3].field.model == 'field'
-    assert query.select[3].field.name == 'field'
+    assert query.select[3].field.values == ['field', 'field']
     assert len(query.group_by) == 1
-    assert query.group_by[0].model == 'field2'
-    assert query.group_by[0].name == 'abc2'
+    assert query.group_by[0].values == ['field2', 'abc2']
     assert len(query.order_by) == 1
-    assert query.order_by[0].model is None
-    assert query.order_by[0].name == 'field2'
+    assert query.order_by[0].values == ['field2']
     assert query.where.expression.is_logical_expression
     assert query.where.expression.first.is_comparision
 
     query_str = '''
-        MODEL: modelname ALIAS: modelalias1
-        JOINON: modelalias1.field ALIAS: modelalias2
-        JOINON: modelalias2.field2
+        MODEL: modelname
         SELECT: (
             abc,
             field2,
-            modelalias1.field3,
+            abc.field3,
             SUM: field.field
             )
         GROUPBY: (
