@@ -194,7 +194,7 @@ def test_query():
             )
         GROUPBY: (
             field2.abc2 )
-        WHERE: (abc <= "asfd") AND (abc.field != 2)
+        WHERE: (abc.abc = def) OR ((abc <= "asfd") AND (abc.field != 2))
         '''
 
     query = parse(query_str, Query)
