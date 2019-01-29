@@ -4,6 +4,8 @@ from playhouse.shortcuts import model_to_dict
 
 
 from server.models import mr
+from server.query.builder import QueryBuilder
+from server.query.result import generate_result_object
 
 api = responder.API()
 
@@ -146,4 +148,10 @@ def dummy(req, resp):
 
 @api.route('/query')
 def query(req, resp):
-    resp.text = 'placeholder'
+    if 'q' not in req.params:
+        return
+    cql_query = req.params['q']
+    query_builder = QueryBuilder(mr)
+    query, query_tree = query_builder(cql_query)
+
+    resp.media = [generate_result_object(row, query_tree.root) for row in query]
