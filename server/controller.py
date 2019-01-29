@@ -4,7 +4,6 @@ from playhouse.shortcuts import model_to_dict
 
 
 from server.models import mr
-from server.query_builder import QueryBuilder
 
 api = responder.API()
 

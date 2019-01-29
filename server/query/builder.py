@@ -1,58 +1,66 @@
-from peewee import ForeignKeyField, fn
-from playhouse.shortcuts import model_to_dict
+from enum import Enum
 
-from server.parser import *
+import peewee
+
+from server import parser
+from server.query.tree import QueryTree
 
 
 class QueryBuilder:
-    def __init__(self, cql_query, mr):
-        self.cql_query = cql_query
+    def __init__(self, mr):
         self.mr = mr
+
+        self.used_models = None
+        self.query_tree = None
+        self.query = None
+
+    def __call__(self, cql_query):
+        ### REMOVE used_models, query from self
 
         self.used_models = []
 
-        parsed_query = parse(self.cql_query, Query)
+        parsed_query = parser.parse(cql_query, parser.Query)
+
         selection_fields = [
-            (s.values, None) if isinstance(s, FieldName) else (s.field.values, s.aggregator)
+            (s.values, None) if isinstance(s, parser.FieldName) else (s.field.values, s.aggregator)
             for s in parsed_query.select
         ]
         group_by_fields = [field.values for field in parsed_query.group_by] if parsed_query.group_by is not None else []
         order_by_fields = [field.values for field in parsed_query.order_by] if parsed_query.order_by is not None else []
         where_fields = self._expression_fields(parsed_query.where.expression) if parsed_query.where is not None else []
 
-
-        model = mr[parsed_query.model.name]
-        query_tree = QueryTreeNode(model._name, model=model)
+        model = self.mr[parsed_query.model.name]
+        self.query_tree = QueryTree(model)
         self.used_models.append(model)
 
         self.query = model.select()
 
         selections = []
         for field_arr, aggregator in selection_fields:
-            selection = self._add_to_node(query_tree, field_arr)
+            selection = self._add_to_node(self.query_tree.root, field_arr, QueryCommand.SELECT)
             if aggregator is None:
                 selections.append(selection)
-            elif aggregator is SumAggregator:
-                selections.append(fn.Sum(selection).alias('sum'))
-            elif aggregator is AvgAggregator:
-                selections.append(fn.Avg(selection).alias('avg'))
-            elif aggregator is CountAggregator:
-                selections.append(fn.Count(selection).alias('count'))
-            elif aggregator is MinAggregator:
-                selections.append(fn.Min(selection).alias('min'))
-            elif aggregator is MaxAggregator:
-                selections.append(fn.Max(selection).alias('max'))
+            elif aggregator is parser.SumAggregator:
+                selections.append(peewee.fn.Sum(selection).alias('sum'))
+            elif aggregator is parser.AvgAggregator:
+                selections.append(peewee.fn.Avg(selection).alias('avg'))
+            elif aggregator is parser.CountAggregator:
+                selections.append(peewee.fn.Count(selection).alias('count'))
+            elif aggregator is parser.MinAggregator:
+                selections.append(peewee.fn.Min(selection).alias('min'))
+            elif aggregator is parser.MaxAggregator:
+                selections.append(peewee.fn.Max(selection).alias('max'))
 
-        group_by = [self._add_to_node(query_tree, field_arr) for field_arr in group_by_fields]
-        order_by = [self._add_to_node(query_tree, field_arr) for field_arr in order_by_fields]
+        group_by = [self._add_to_node(self.query_tree.root, field_arr, QueryCommand.GROUPBY) for field_arr in group_by_fields]
+        order_by = [self._add_to_node(self.query_tree.root, field_arr, QueryCommand.ORDERBY) for field_arr in order_by_fields]
         # TODO Where
 
-        # overwrite query
-        self.query = self.query.group_by(*group_by)
-        self.query = self.query.order_by(*order_by)
+        self.query = self.query\
+            .group_by(*group_by)\
+            .order_by(*order_by)\
+            .limit(1000)
 
-        self.query = (self.query.select(*selections).limit(1000))
-
+        return self.query, self.query_tree
 
     @staticmethod
     def _expression_fields(expression):
@@ -60,24 +68,27 @@ class QueryBuilder:
             return QueryBuilder._expression_fields(expression.first) + QueryBuilder._expression_fields(expression.second)
         else:
             first = expression.first.values
-            second = expression.second.values if isinstance(expression.second, FieldName) else None
+            second = expression.second.values if isinstance(expression.second, parser.FieldName) else None
             if second:
                 return [first, second]
             else:
                 return [first]
 
-    def _add_to_node(self, node, field_arr):
+    def _add_to_node(self, node, field_arr, query_command):
         field_head, *field_arr = field_arr
 
         model_fields = node.model._meta.fields
         model_backrefs = {backref.backref: backref for backref in node.model._meta.backrefs.keys()}
-        if field_head in model_fields and not isinstance(model_fields[field_head], ForeignKeyField):
+        if field_head in model_fields and not isinstance(model_fields[field_head], peewee.ForeignKeyField):
             # field_head is of type field
             assert len(field_arr) == 0, f'Field {field_head} of model {node.model._name} has no children.'
-            if field_head not in node.fields:
-                node.fields.append(field_head)
-            return getattr(node.model, field_head)
-        elif field_head in model_fields and isinstance(model_fields[field_head], ForeignKeyField):
+            field_node = node.get_field(field_head)
+            if not field_node:
+                field_node = node.add_field(field_head, getattr(node.model, field_head))
+            if query_command not in field_node.commands:
+                field_node.commands.append(query_command)
+            return field_node.field
+        elif field_head in model_fields and isinstance(model_fields[field_head], peewee.ForeignKeyField):
             # field_head is of type relation n:1
             child_node = node.get_child(field_head)
             if not child_node:
@@ -89,9 +100,11 @@ class QueryBuilder:
                     join_model = join_model.alias()
                 self.query = self.query.join_from(node.model, join_model, on=(field == getattr(join_model, join_model._meta.primary_key.name)))
                 child_node = node.add_child(field_head, join_model)
+            if query_command not in child_node.commands:
+                child_node.commands.append(query_command)
             if len(field_arr) == 0:
                 return child_node.model
-            return self._add_to_node(child_node, field_arr)
+            return self._add_to_node(child_node, field_arr, query_command)
         elif field_head in model_backrefs and model_backrefs[field_head].model._type == 'model':
             # field_head is of type relation 1:n
             child_node = node.get_child(field_head)
@@ -104,9 +117,11 @@ class QueryBuilder:
                 join_field = getattr(join_model, model_backrefs[field_head].name)
                 self.query = self.query.join_from(node.model, join_model, on=(join_field))
                 child_node = node.add_child(field_head, join_model)
+            if query_command not in child_node.commands:
+                child_node.commands.append(query_command)
             if len(field_arr) == 0:
                 return child_node.model
-            return self._add_to_node(child_node, field_arr)
+            return self._add_to_node(child_node, field_arr, query_command)
         elif field_head in model_backrefs and model_backrefs[field_head].model._type == 'nm_relation':
             # field_head is of type relation n:m
             child_node = node.get_child(field_head)
@@ -127,52 +142,18 @@ class QueryBuilder:
                     join_model = join_model.alias()
                 self.query = self.query.join_from(node.model, join_relation, on=(join_field_1))
                 self.query = self.query.join_from(join_relation, join_model, on=(join_field_2 == getattr(join_model, join_model._meta.primary_key.name)))
-                child_node = node.add_child(field_head, join_model)
+                child_node = node.add_child(field_head, join_model, shadow_name=join_field_2.name)
+            if query_command not in child_node.commands:
+                child_node.commands.append(query_command)
             if len(field_arr) == 0:
                 return child_node.model
-            return self._add_to_node(child_node, field_arr)
+            return self._add_to_node(child_node, field_arr, query_command)
         else:
             raise AssertionError(f'Field {field_head} of model {node.model._name} does not exist.')
 
 
-class QueryTreeNode:
-    def __init__(self, name, parent=None, model=None):
-        self.name = name
-        assert parent is None or isinstance(parent, QueryTreeNode)
-        self.parent = parent
-        if parent is not None:
-            parent.children.append(self)
-        self.children = []
-        self.fields = []
-        self.model = model
-
-    def add_child(self, name, model=None):
-        return QueryTreeNode(name, parent=self, model=model)
-
-    def get_child(self, name, default=None):
-        for child in self.children:
-            if child.name == name:
-                return child
-        return default
-
-    @property
-    def is_root(self):
-        return self.parent is None
-
-    @property
-    def is_leaf(self):
-        return len(self.children) == 0
-
-    def __iter__(self):
-        yield self
-        for child in self.children:
-            for c in child:
-                yield c
-
-    def __repr__(self):
-        name = self.name
-        node = self
-        while not node.is_root:
-            name = node.parent.name + '/' + name
-            node = node.parent
-        return f'QueryTreeNode({name}, model={self.model}, fields={self.fields})'
+class QueryCommand(Enum):
+    SELECT = 1
+    ORDERBY = 2
+    GROUPBY = 3
+    WHERE = 4
