@@ -126,16 +126,17 @@ class Comparision:
         (attr('second', String), attr('_comparator', Comparator), attr('first', FieldName))
     ]
 
+    is_comparision = True
+    is_logical_expression = False
+
     @property
     def comparator(self):
         return self._comparator.type
 
-class Expression(List):
-    grammar = [attr('_comparision', Comparision)]
-
+class Expression:
     @property
     def is_comparision(self):
-        return hasattr(self, '_comparision')
+        return hasattr(self, '_comparision') and not hasattr(self, '_helper')
 
     @property
     def is_logical_expression(self):
@@ -145,28 +146,43 @@ class Expression(List):
     def first(self):
         if self.is_comparision:
             return self._comparision.first
-        return self._logical_expression[0]
+        elif hasattr(self, '_helper'):
+            return self._expression
+        else:
+            return self._expression.first
 
     @property
     def second(self):
         if self.is_comparision:
             return self._comparision.second
-        return self._logical_expression[2]
+        elif hasattr(self, '_helper'):
+            return self._helper.expression
+        else:
+            return self._expression.second
 
     @property
     def comparator(self):
-        if self.is_comparision:
+        if hasattr(self, '_comparision'):
             return self._comparision.comparator
 
     @property
     def logical_operator(self):
-        if self.is_logical_expression:
-            return self._logical_expression[1].type
+        if hasattr(self, '_helper'):
+            return self._helper.operator.type
+        elif hasattr(self, '_expression'):
+            return self._expression.logical_operator
 
-Expression.grammar.append(attr(
-    '_logical_expression',
-    ('(', Expression, ')', LogicalOperator, '(', Expression, ')')
-))
+class ExpressionHelper:
+    pass
+
+Expression.grammar = [
+    (attr('_expression', Comparision), attr('_helper', ExpressionHelper)),
+    ('(', attr('_expression', Expression), ')', attr('_helper', ExpressionHelper)),
+    (attr('_comparision', Comparision), ),
+    ('(', attr('_expression', Expression), ')'),
+]
+
+ExpressionHelper.grammar = attr('operator', LogicalOperator), attr('expression', Expression)
 
 class Model:
     grammar = ignore(ModelCommand), attr('_name', ModelName)

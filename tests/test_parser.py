@@ -90,26 +90,87 @@ def test_logical_operator():
     assert parse('XOR', LogicalOperator).type is XorOperator
 
 def test_expression():
-    expression = parse('test == abc', Expression)
-    assert expression.is_comparision
-    assert expression.first.values[0] == 'test'
-    assert expression.second.values[0] == 'abc'
-    assert expression.comparator is EqComparator
+    parse('test == abc', Expression)
+    parse('((test == abc))', Expression)
+    parse('test.test.test <= test.test', Expression)
+    parse('test.test >= abc AND abc.test.test == abc', Expression)
 
-    assert expression.logical_operator is None
-
-    parse('(test == abc) AND (test == test3)', Expression)
-    parse('((test == abc) AND (test == test3)) OR (abc <= abc)', Expression)
-
-    expression = parse('(test == "abc abv") AND ((test == 1) OR (abc <= abc))', Expression)
+    expression = parse('test.test >= abc AND abc.test.test == abc OR abc == abc', Expression)
     assert expression.is_logical_expression
-    assert expression.first.first.values[0] == 'test'
-    assert expression.first.second.value == 'abc abv'
     assert expression.logical_operator is AndOperator
+    assert expression.first.is_comparision
+    assert expression.first.comparator is GeqComparator
+    assert expression.first.first.values == ['test', 'test']
+    assert expression.first.second.values == ['abc']
+    assert expression.second.is_logical_expression
+    assert expression.second.logical_operator is OrOperator
+    assert expression.second.first.is_comparision
+    assert expression.second.first.comparator is EqComparator
+    assert expression.second.first.first.values == ['abc', 'test', 'test']
+    assert expression.second.first.second.values == ['abc']
+    assert expression.second.second.is_comparision
+    assert expression.second.second.comparator is EqComparator
+    assert expression.second.second.first.values == ['abc']
+    assert expression.second.second.second.values == ['abc']
 
-    nested_expression = expression.second
-    assert nested_expression.logical_operator is OrOperator
-    assert nested_expression.comparator is None
+    expression = parse('test.test >= abc AND (abc.test.test == abc OR abc == abc)', Expression)
+    assert expression.is_logical_expression
+    assert expression.logical_operator is AndOperator
+    assert expression.first.is_comparision
+    assert expression.first.comparator is GeqComparator
+    assert expression.first.first.values == ['test', 'test']
+    assert expression.first.second.values == ['abc']
+    assert expression.second.is_logical_expression
+    assert expression.second.logical_operator is OrOperator
+    assert expression.second.first.is_comparision
+    assert expression.second.first.comparator is EqComparator
+    assert expression.second.first.first.values == ['abc', 'test', 'test']
+    assert expression.second.first.second.values == ['abc']
+    assert expression.second.second.is_comparision
+    assert expression.second.second.comparator is EqComparator
+    assert expression.second.second.first.values == ['abc']
+    assert expression.second.second.second.values == ['abc']
+
+
+    expression = parse('(test.test >= abc AND abc.test.test == abc) OR abc == abc', Expression)
+    assert expression.is_logical_expression
+    assert expression.logical_operator is OrOperator
+    assert expression.first.is_logical_expression
+    assert expression.first.logical_operator is AndOperator
+    assert expression.first.first.is_comparision
+    assert expression.first.first.comparator is GeqComparator
+    assert expression.first.first.first.values == ['test', 'test']
+    assert expression.first.first.second.values == ['abc']
+    assert expression.first.second.is_comparision
+    assert expression.first.second.comparator is EqComparator
+    assert expression.first.second.first.values == ['abc', 'test', 'test']
+    assert expression.first.second.second.values == ['abc']
+    assert expression.second.is_comparision
+    assert expression.second.comparator is EqComparator
+    assert expression.second.first.values == ['abc']
+    assert expression.second.second.values == ['abc']
+
+    expression = parse('abc.test == abc AND ((abc.test <= abc OR abc2.test2 >= abc) OR test.abc == abc)', Expression)
+    assert expression.is_logical_expression
+    assert expression.logical_operator is AndOperator
+    assert expression.first.is_comparision
+    assert expression.first.comparator is EqComparator
+    assert expression.second.is_logical_expression
+    assert expression.second.logical_operator is OrOperator
+    assert expression.second.first.is_logical_expression
+    assert expression.second.first.logical_operator is OrOperator
+    assert expression.second.first.first.is_comparision
+    assert expression.second.first.first.comparator is LeqComparator
+    assert expression.second.first.first.first.values == ['abc', 'test']
+    assert expression.second.first.first.second.values == ['abc']
+    assert expression.second.first.second.is_comparision
+    assert expression.second.first.second.comparator is GeqComparator
+    assert expression.second.first.second.first.values == ['abc2', 'test2']
+    assert expression.second.first.second.second.values == ['abc']
+    assert expression.second.second.is_comparision
+    assert expression.second.second.comparator is EqComparator
+    assert expression.second.second.first.values == ['test', 'abc']
+    assert expression.second.second.second.values == ['abc']
 
 def test_model():
     model = parse('MODEL: model', Model)
@@ -147,10 +208,9 @@ def test_where():
     assert where.expression.first.values[0] == 'abc'
     assert where.expression.second.value == 'test'
     where = parse('WHERE: (abc == 1) AND (abc.def <= "test")', Where)
-    assert where.expression.first.first.values[0] == 'abc'
+    assert where.expression.first.first.values == ['abc']
     assert where.expression.first.second.value == 1
-    assert where.expression.second.first.values[0] == 'abc'
-    assert where.expression.second.first.values[1] == 'def'
+    assert where.expression.second.first.values == ['abc', 'def']
     assert where.expression.second.second.value == 'test'
 
 def test_query():
@@ -166,7 +226,7 @@ def test_query():
         field2.abc2 )
     ORDERBY: (
         field2 )
-    WHERE: (abc <= "asfd") AND (abc.field != 2)
+    WHERE: abc <= "asfd" AND (abc.field != 2)
     '''
 
     query = parse(query_str, Query)
@@ -194,7 +254,7 @@ def test_query():
             )
         GROUPBY: (
             field2.abc2 )
-        WHERE: (abc.abc = def) OR ((abc <= "asfd") AND (abc.field != 2))
+        WHERE: abc.abc == def OR ((abc <= "asfd") AND (abc.field != 2))
         '''
 
     query = parse(query_str, Query)
