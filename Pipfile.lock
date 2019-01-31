@@ -32,10 +32,10 @@
         },
         "apispec": {
             "hashes": [
-                "sha256:8072aaba54cb430787c3662512d5c9fe521eae1ec0b6d7d05b129814b6b48f69",
-                "sha256:93a6046bf692e8e4398101d447fffcf148b9dbed66d886073e05b491cd6835fd"
+                "sha256:8fa5be82294e8847f92433b91e687cacff293ec1a3cd8e3a025a406271920bc2",
+                "sha256:b502e0a0a49142c3169f2b783042926cb468f5aef10026a74bf8892e95c593bd"
             ],
-            "version": "==1.0.0b6"
+            "version": "==1.0.0rc1"
         },
         "apistar": {
             "hashes": [
@@ -285,11 +285,11 @@
         },
         "pytest": {
             "hashes": [
-                "sha256:41568ea7ecb4a68d7f63837cf65b92ce8d0105e43196ff2b26622995bb3dc4b2",
-                "sha256:c3c573a29d7c9547fb90217ece8a8843aa0c1328a797e200290dc3d0b4b823be"
+                "sha256:65aeaa77ae87c7fc95de56285282546cfa9c886dc8e5dc78313db1c25e21bc07",
+                "sha256:6ac6d467d9f053e95aaacd79f831dbecfe730f419c6c7022cb316b365cd9199d"
             ],
             "index": "pypi",
-            "version": "==4.1.1"
+            "version": "==4.2.0"
         },
         "python-dotenv": {
             "hashes": [
@@ -324,10 +324,10 @@
         },
         "requests-toolbelt": {
             "hashes": [
-                "sha256:42c9c170abc2cacb78b8ab23ac957945c7716249206f90874651971a4acff237",
-                "sha256:f6a531936c6fa4c6cfce1b9c10d5c4f498d16528d2a54a22ca00011205a187b5"
+                "sha256:380606e1d10dc85c3bd47bf5a6095f815ec007be7a8b69c878507068df059e6f",
+                "sha256:968089d4584ad4ad7c171454f0a5c6dac23971e9472521ea3b6d49d610aa6fc0"
             ],
-            "version": "==0.8.0"
+            "version": "==0.9.1"
         },
         "responder": {
             "hashes": [
@@ -346,10 +346,10 @@
         },
         "rx": {
             "hashes": [
-                "sha256:28396abe4da1e647ddd514242d65924b137567f8643545e031a3db0794f1036b",
-                "sha256:6504edc7155d34ce95dae7698d02fc6e87f9ceb64939e712984433aef2242255"
+                "sha256:7e6919a3159d6c6cee266fdeeb48783118bab20177e38fa5d6a8ebd24a132f72",
+                "sha256:e7ccf18bb8e76f8a44557febd5c149c2ad36df19442f678be529c710b0553d85"
             ],
-            "version": "==3.0.0a0"
+            "version": "==3.0.0a2"
         },
         "six": {
             "hashes": [
@@ -360,9 +360,9 @@
         },
         "starlette": {
             "hashes": [
-                "sha256:ab382951daf9c3574521ad903ad872de12ec49ffeb4d670769fa98cd6a17c9a1"
+                "sha256:7cc05c33d00db3b2ddfd7516a737544ed0a34c9dd0ced94076f29b581ce4f532"
             ],
-            "version": "==0.9.11"
+            "version": "==0.10.1"
         },
         "urllib3": {
             "hashes": [
@@ -373,9 +373,9 @@
         },
         "uvicorn": {
             "hashes": [
-                "sha256:8716ac06f07938ad96996340ad6077d8e4bce96f807a41d0a4a429d2c0f9f751"
+                "sha256:8800c837dc9024ab444ed65b0b9890aa5a81af68481811395e7df89444b6a4a2"
             ],
-            "version": "==0.4.0"
+            "version": "==0.4.1"
         },
         "uvloop": {
             "hashes": [
