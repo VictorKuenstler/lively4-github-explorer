@@ -20,20 +20,16 @@ class QueryBuilder:
         self.used_models = []
 
         parsed_query = parser.parse(cql_query, parser.Query)
-
-        selection_fields = [
-            (s.values, None) if isinstance(s, parser.FieldName) else (s.field.values, s.aggregator)
-            for s in parsed_query.select
-        ]
-        group_by_fields = [field.values for field in parsed_query.group_by] if parsed_query.group_by is not None else []
-        order_by_fields = [field.values for field in parsed_query.order_by] if parsed_query.order_by is not None else []
-        where_fields = self._expression_fields(parsed_query.where.expression) if parsed_query.where is not None else []
-
         model = self.mr[parsed_query.model.name]
         self.query_tree = QueryTree(model)
         self.used_models.append(model)
 
         self.query = model.select()
+
+        selection_fields = [
+            (s.values, None) if isinstance(s, parser.FieldName) else (s.field.values, s.aggregator)
+            for s in parsed_query.select
+        ]
 
         selections = []
         for field_arr, aggregator in selection_fields:
@@ -51,28 +47,60 @@ class QueryBuilder:
             elif aggregator is parser.MaxAggregator:
                 selections.append(peewee.fn.Max(selection).alias('max'))
 
+        group_by_fields = [field.values for field in parsed_query.group_by] if parsed_query.group_by is not None else []
+        order_by_fields = [field.values for field in parsed_query.order_by] if parsed_query.order_by is not None else []
         group_by = [self._add_to_node(self.query_tree.root, field_arr, QueryCommand.GROUPBY) for field_arr in group_by_fields]
         order_by = [self._add_to_node(self.query_tree.root, field_arr, QueryCommand.ORDERBY) for field_arr in order_by_fields]
-        # TODO Where
 
-        self.query = self.query\
-            .group_by(*group_by)\
+        where_expression = self._build_expression(parsed_query.where.expression) if parsed_query.where is not None else None
+
+        self.query = self.query \
+            .group_by(*group_by) \
             .order_by(*order_by)\
+            .where(where_expression) \
             .limit(1000)
 
         return self.query, self.query_tree
 
-    @staticmethod
-    def _expression_fields(expression):
+    def _build_expression(self, expression):
         if expression.is_logical_expression:
-            return QueryBuilder._expression_fields(expression.first) + QueryBuilder._expression_fields(expression.second)
+            assert expression.logical_operator in [parser.AndOperator, parser.OrOperator, parser.XorOperator]
+
+            first = self._build_expression(expression.first)
+            second = self._build_expression(expression.second)
+            if expression.logical_operator is parser.AndOperator:
+                return first and second
+            elif expression.logical_operator is parser.OrOperator:
+                return first or second
+            elif expression.logical_operator is parser.XorOperator:
+                return first ^ second
         else:
-            first = expression.first.values
-            second = expression.second.values if isinstance(expression.second, parser.FieldName) else None
-            if second:
-                return [first, second]
+            assert expression.comparator in [parser.EqComparator, parser.GeqComparator, parser.LeqComparator, parser.GreaterComparator, parser.LessComparator, parser.NeqComparator]
+
+            if isinstance(expression.first, parser.FieldName):
+                first = self._add_to_node(self.query_tree.root, expression.first.values, QueryCommand.WHERE)
+                first_is_field = True
             else:
-                return [first]
+                first = expression.first.value
+                first_is_field = False
+
+            if isinstance(expression.second, parser.FieldName):
+                second = self._add_to_node(self.query_tree.root, expression.second.values, QueryCommand.WHERE)
+            else:
+                second = expression.second.value
+
+            if expression.comparator is parser.EqComparator:
+                return first == second if first_is_field else second == first
+            elif expression.comparator is parser.GeqComparator:
+                return first >= second if first_is_field else second <= first
+            elif expression.comparator is parser.LeqComparator:
+                return first <= second if first_is_field else second >= first
+            elif expression.comparator is parser.GreaterComparator:
+                return first > second if first_is_field else second < first
+            elif expression.comparator is parser.LeqComparator:
+                return first < second if first_is_field else second > first
+            elif expression.comparator is parser.NeqComparator:
+                return first != second if first_is_field else second != first
 
     def _add_to_node(self, node, field_arr, query_command):
         field_head, *field_arr = field_arr

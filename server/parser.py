@@ -122,8 +122,8 @@ class Comparision:
         (attr('first', FieldName), attr('_comparator', Comparator), attr('second', FieldName)),
         (attr('first', FieldName), attr('_comparator', Comparator), attr('second', Integer)),
         (attr('first', FieldName), attr('_comparator', Comparator), attr('second', String)),
-        (attr('second', Integer), attr('_comparator', Comparator), attr('first', FieldName)),
-        (attr('second', String), attr('_comparator', Comparator), attr('first', FieldName))
+        (attr('first', Integer), attr('_comparator', Comparator), attr('second', FieldName)),
+        (attr('first', String), attr('_comparator', Comparator), attr('second', FieldName))
     ]
 
     is_comparision = True
