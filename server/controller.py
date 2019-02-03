@@ -86,66 +86,6 @@ def meta(req, resp):
         resp.media.append(model_meta)
 
 
-@api.route('/dummy')
-def dummy(req, resp):
-    r = [
-        {
-            'sha': 'f0df88fd2775f37e023ad628ec7d35a082394b6b',
-            'author': {
-                'login': 'userdummy',
-                'company': 'companydummy',
-            },
-            'comments': [
-                {
-                    'body': 'comment1',
-                    'line': 1,
-                    'position': 10,
-                },
-                {
-                    'body': 'comment2',
-                    'line': 5,
-                    'position': 12,
-                },
-                {
-                    'body': 'comment3',
-                    'line': 3,
-                    'position': 1,
-                }
-            ],
-            'children': [],
-        },
-        {
-            'sha': 'abc88fd2775f37e023ad628ec7d35a082394b6a',
-            'author': {
-                'login': 'anon',
-                'company': None,
-            },
-            'comments': [
-                {
-                    'body': 'comment4',
-                    'line': 1,
-                    'position': 1
-                }
-            ],
-            'children': [
-                {
-                    'sha': 'def88fd2775f37e023ad628ec7d35a082394b6a',
-                },
-                {
-                    'sha': 'ghi88fd2775f37e023ad628ec7d35a082394b6a',
-                },
-                {
-                    'sha': 'jkl88fd2775f37e023ad628ec7d35a082394b6a',
-                },
-            ]   
-        }
-    ]
-
-    print(r)
-
-    resp.media = r
-
-
 @api.route('/query')
 def query(req, resp):
     if 'q' not in req.params:
