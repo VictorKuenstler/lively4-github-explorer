@@ -1,0 +1,283 @@
+[
+  {
+    "model": "user",
+    "fields": [
+      {
+        "name": "id",
+        "type": "AutoField",
+        "primary_key": true,
+        "example": 512248
+      },
+      {
+        "name": "login",
+        "type": "TextField",
+        "unique": true,
+        "example": "bluishoul"
+      },
+      {
+        "name": "company",
+        "type": "TextField",
+        "example": "Coding.net"
+      },
+      {
+        "name": "state",
+        "type": "TextField",
+        "example": "广东省"
+      },
+      {
+        "name": "city",
+        "type": "TextField",
+        "example": "深圳"
+      }
+    ],
+    "relations": [
+      {
+        "name": "projects",
+        "type": "1:n",
+        "rel_model": "project",
+        "example": [{
+          "id": 46318015,
+          "url": "https://api.github.com/repos/bluishoul/exp-loader",
+          "name": "exp-loader",
+          "description": "Exp features loader for webpack"
+        }]
+      },
+      {
+        "name": "authored_commits",
+        "type": "1:n",
+        "rel_model": "commit",
+        "example": [{
+          "id": 25969576,
+          "sha": "ed9a4b9503dd91b82a7cfeb183a314b58cfc1b84"
+        }]
+      },
+      {
+        "name": "commits",
+        "type": "1:n",
+        "rel_model": "commit",
+        "example": [{
+          "id": 25969576,
+          "sha": "ed9a4b9503dd91b82a7cfeb183a314b58cfc1b84"
+        }]
+      },
+      {
+        "name": "comments",
+        "type": "1:n",
+        "rel_model": "comment",
+        "example": [{
+          "id": 2565485,
+          "body": "+1",
+          "line": null,
+          "position": null
+        }]
+      }
+    ]
+  },
+  {
+    "model": "project",
+    "fields": [
+      {
+        "name": "id",
+        "type": "AutoField",
+        "primary_key": true,
+        "example": {
+          "id": 14557304,
+          "url": "https://api.github.com/repos/muccc/iridium-toolkit",
+          "name": "iridium-toolkit",
+          "description": "A set of tools to capture and decode Iridium frames"}
+      },
+      {
+        "name": "url",
+        "type": "TextField",
+        "unique": true,
+        "example": "https://api.github.com/repos/muccc/iridium-toolkit"
+      },
+      {
+        "name": "name",
+        "type": "TextField",
+        "example": "iridium-toolkit"
+      },
+      {
+        "name": "description",
+        "type": "TextField",
+        "example": "A set of tools to capture and decode Iridium frames"
+      }
+    ],
+    "relations": [
+      {
+        "name": "owner",
+        "type": "n:1",
+        "rel_model": "user",
+        "examle": {
+          "id": 335573,
+          "login": "muccc",
+          "company": null,
+          "state": "Bayern",
+          "city": "München"
+        }
+      },
+      {
+        "name": "forked_from",
+        "type": "n:1",
+        "rel_model": "project",
+        "example": {
+
+        }
+      },
+      {
+        "name": "forks",
+        "type": "1:n",
+        "rel_model": "project",
+        "example": [{
+          "id": 45521105,
+          "url": "https://api.github.com/repos/arirubinstein/iridium-toolkit",
+          "name": "iridium-toolkit",
+          "description": "A set of tools to parse Iridium frames"
+        }]
+      },
+      {
+        "name": "commits",
+        "type": "n:m",
+        "rel_model": "commit",
+        "example": [{
+          "id": 200784599,
+          "sha": "dce1a62282a9afa59f1b9f5dd387a60285ebe6a8"
+        }]
+      }
+    ]
+  },
+  {
+    "model": "commit",
+    "fields": [
+      {
+        "name": "id",
+        "type": "AutoField",
+        "primary_key": true,
+        "example": 1128246
+      },
+      {
+        "name": "sha",
+        "type": "TextField",
+        "unique": true,
+        "example": "05c5c10cd2d08b8db4b6b6fbb5cc14889bc7bd14"
+      }
+    ],
+    "relations": [
+      {
+        "name": "author",
+        "type": "n:1",
+        "rel_model": "user",
+        "example": {
+          "id": 71562,
+          "login": "qbit",
+          "company": null,
+          "state": "Colorado",
+          "city": "Rye"
+        }
+      },
+      {
+        "name": "committer",
+        "type": "n:1",
+        "rel_model": "user",
+        "example": {
+          "id": 71562,
+          "login": "qbit",
+          "company": null,
+          "state": "Colorado",
+          "city": "Rye"
+        }
+      },
+      {
+        "name": "projects",
+        "type": "n:m",
+        "rel_model": "project",
+        "example": [{
+          "id": 67063,
+          "url": "https://api.github.com/repos/qbit/node-pushover",
+          "name": "node-pushover",
+          "description": "Pushover notifications for node.js (JavaScript,NodeJS)"
+        }]
+      },
+      {
+        "name": "children",
+        "type": "n:m",
+        "rel_model": "commit",
+        "example": [{
+          "id": 1128249,
+          "sha": "83bff1a1287a4943aff529b602b610c546bed8ef"
+        }]
+      },
+      {
+        "name": "parents",
+        "type": "n:m",
+        "rel_model": "commit",
+        "example": [{
+          "id": 1128248,
+          "sha": "95b227f1c3221aa860ed0b8ada47de0c805a2014"
+        }]
+      },
+      {
+        "name": "comments",
+        "type": "1:n",
+        "rel_model": "comment",
+        "example": [{
+          "id": 3311572,
+          "commit": 1128246,
+          "author": 3506082,
+          "body": "I don't understand this change.",
+          "line": 268,
+          "position": 22
+        }]
+      }
+    ]
+  },
+  {
+    "model": "comment",
+    "fields": [
+      {
+        "name": "id",
+        "type": "AutoField",
+        "primary_key": true,
+        "example": 3312266
+      },
+      {
+        "name": "body",
+        "type": "TextField",
+        "example": "yup, seems to be fine now"
+      },
+      {
+        "name": "line",
+        "type": "IntegerField",
+        "example": 114
+      },
+      {
+        "name": "position",
+        "type": "IntegerField",
+        "example": 5
+      }
+    ],
+    "relations": [
+      {
+        "name": "commit",
+        "type": "n:1",
+        "rel_model": "commit",
+        "example": {
+          "id": 360540533,
+          "sha": "120387bb039e88a0f69a1334a97fee88db66d886"
+        }
+      },
+      {
+        "name": "author",
+        "type": "n:1",
+        "rel_model": "user",
+        "example": {
+          "id": 1268512,
+          "login": "actionless",
+          "company": null,
+          "state": "Praha",
+          "city": "Praha"
+        }
+      }
+    ]
+  }
+]

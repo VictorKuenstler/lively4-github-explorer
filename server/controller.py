@@ -1,3 +1,7 @@
+import json
+
+import os
+
 import responder
 from peewee import DoesNotExist
 from playhouse.shortcuts import model_to_dict
@@ -84,6 +88,15 @@ def meta(req, resp):
             model_meta['relations'].append(relation_dict)
 
         resp.media.append(model_meta)
+
+
+@api.route('/example_meta')
+def example_meta(req, resp):
+    dir = os.path.dirname(os.path.realpath(__file__))
+    file = os.path.join(dir, 'example_meta.json')
+
+    with open(file, encoding='utf-8') as f:
+        resp.media = json.load(f)
 
 
 @api.route('/query')
