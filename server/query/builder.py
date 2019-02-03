@@ -58,7 +58,7 @@ class QueryBuilder:
             .group_by(*group_by) \
             .order_by(*order_by)\
             .where(where_expression) \
-            .limit(1000)
+            .limit(50)
 
         return self.query, self.query_tree
 
