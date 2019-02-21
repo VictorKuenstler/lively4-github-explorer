@@ -69,9 +69,9 @@ class QueryBuilder:
             first = self._build_expression(expression.first)
             second = self._build_expression(expression.second)
             if expression.logical_operator is parser.AndOperator:
-                return first and second
+                return first & second
             elif expression.logical_operator is parser.OrOperator:
-                return first or second
+                return first | second
             elif expression.logical_operator is parser.XorOperator:
                 return first ^ second
         else:
