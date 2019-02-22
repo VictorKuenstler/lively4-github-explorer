@@ -186,3 +186,15 @@ We solved it by changing it to the following rules:
 We solved the problem of the changed parsing tree by adding `@property` decorators to helper functions within the grammar classes which acted as fields.
 
 ## HTTP Server
+For the HTTP webserver we used the ASGI framework [responder](https://python-responder.org/en/latest/).
+The framework uses the f-string syntax for route declaration and mutable response objects which are passed into each view.
+
+The HTTP-Api-Endpoints are defined in `server.views.py`.
+
+### Endpoints
+- `/models`: Returns a list of names of all available models.
+- `/models/{model_name}`: Returns a list of objects of the given model. Does not contain any relationships.
+- `/models/{model_name}/{_id}`: Returns an object of the given model with the primary key `_id`. Contains one layer of relationships.
+- `/meta`: Returns a auto generated meta descriptions for all models, containing their fields and relationships to other models.
+- `/example_meta`: Returns a persisted meta description for all models just like `/meta` with additional example data.
+- `/query?q=<cql-query>`: Returns the result object for a sent query.
