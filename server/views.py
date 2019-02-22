@@ -36,7 +36,7 @@ def model_single(req, resp, model_name, id_):
     if model_name in mr:
         model = mr[model_name]
         try:
-            query = model.get(model.id == id_)
+            query = model.get_by_id(id_)
             resp.media = mr.query_dict(query, 1)
             return
         except (ValueError, DoesNotExist):
