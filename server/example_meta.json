@@ -28,6 +28,16 @@
         "name": "city",
         "type": "TextField",
         "example": "深圳"
+      },
+      {
+        "name": "location",
+        "type": "TextField",
+        "example": "Shenzhen, China"
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "example": "2011-12-25 12:13:30"
       }
     ],
     "relations": [
@@ -35,41 +45,117 @@
         "name": "projects",
         "type": "1:n",
         "rel_model": "project",
-        "example": [{
-          "id": 46318015,
-          "url": "https://api.github.com/repos/bluishoul/exp-loader",
-          "name": "exp-loader",
-          "description": "Exp features loader for webpack"
-        }]
+        "example": [
+          {
+            "id": 46318015,
+            "url": "https://api.github.com/repos/bluishoul/exp-loader",
+            "name": "exp-loader",
+            "description": "Exp features loader for webpack"
+          }
+        ]
       },
       {
         "name": "authored_commits",
         "type": "1:n",
         "rel_model": "commit",
-        "example": [{
-          "id": 25969576,
-          "sha": "ed9a4b9503dd91b82a7cfeb183a314b58cfc1b84"
-        }]
+        "example": [
+          {
+            "id": 25969576,
+            "sha": "ed9a4b9503dd91b82a7cfeb183a314b58cfc1b84"
+          }
+        ]
       },
       {
         "name": "commits",
         "type": "1:n",
         "rel_model": "commit",
-        "example": [{
-          "id": 25969576,
-          "sha": "ed9a4b9503dd91b82a7cfeb183a314b58cfc1b84"
-        }]
+        "example": [
+          {
+            "id": 25969576,
+            "sha": "ed9a4b9503dd91b82a7cfeb183a314b58cfc1b84"
+          }
+        ]
       },
       {
         "name": "comments",
         "type": "1:n",
         "rel_model": "comment",
-        "example": [{
-          "id": 2565485,
-          "body": "+1",
-          "line": null,
-          "position": null
-        }]
+        "example": [
+          {
+            "id": 2565485,
+            "body": "+1",
+            "line": null,
+            "position": null
+          }
+        ]
+      },
+      {
+        "type": "n:m",
+        "name": "member_projects",
+        "rel_model": "project",
+        "example": [
+          {
+            "id": 1574731,
+            "url": "https://api.github.com/repos/bluishoul/springside4",
+            "name": "springside4",
+            "description": "A Spring Framework based, pragmatic style JavaEE application reference architecture.",
+            "created_at": "2012-10-07 14:57:34"
+          }
+        ]
+      },
+      {
+        "type": "n:m",
+        "name": "follows",
+        "rel_model": "user",
+        "example": [
+          {
+            "id": 1954,
+            "login": "visionmedia",
+            "company": "LearnBoost",
+            "state": null,
+            "city": null,
+            "location": null,
+            "created_at": "2008-09-18 20:37:28"
+          }
+        ]
+      },
+      {
+        "type": "n:m",
+        "name": "follower",
+        "rel_model": "user",
+        "example": [
+          {
+            "id": 14017,
+            "login": "Ordosbxy",
+            "company": null,
+            "state": "内蒙古自治区 / Inner Mongolia",
+            "city": "鄂尔多斯市",
+            "location": "Ordos, Inner Mongolia, China",
+            "created_at": "2012-08-02 13:07:40"
+          }
+        ]
+      },
+      {
+        "type": "1:n",
+        "name": "reported_issues",
+        "rel_model": "issue",
+        "example": [
+          {
+            "id": 2752986,
+            "created_at": "2012-12-25 06:15:28"
+          }
+        ]
+      },
+      {
+        "type": "1:n",
+        "name": "assigned_issues",
+        "rel_model": "issue",
+        "example": [
+          {
+            "id": 2752986,
+            "created_at": "2012-12-25 06:15:28"
+          }
+        ]
       }
     ]
   },
@@ -80,11 +166,7 @@
         "name": "id",
         "type": "AutoField",
         "primary_key": true,
-        "example": {
-          "id": 14557304,
-          "url": "https://api.github.com/repos/muccc/iridium-toolkit",
-          "name": "iridium-toolkit",
-          "description": "A set of tools to capture and decode Iridium frames"}
+        "example": 14557304
       },
       {
         "name": "url",
@@ -101,6 +183,11 @@
         "name": "description",
         "type": "TextField",
         "example": "A set of tools to capture and decode Iridium frames"
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "example": "2014-12-28 14:19:34"
       }
     ],
     "relations": [
@@ -121,28 +208,56 @@
         "type": "n:1",
         "rel_model": "project",
         "example": {
-
         }
       },
       {
         "name": "forks",
         "type": "1:n",
         "rel_model": "project",
-        "example": [{
-          "id": 45521105,
-          "url": "https://api.github.com/repos/arirubinstein/iridium-toolkit",
-          "name": "iridium-toolkit",
-          "description": "A set of tools to parse Iridium frames"
-        }]
+        "example": [
+          {
+            "id": 45521105,
+            "url": "https://api.github.com/repos/arirubinstein/iridium-toolkit",
+            "name": "iridium-toolkit",
+            "description": "A set of tools to parse Iridium frames"
+          }
+        ]
       },
       {
         "name": "commits",
         "type": "n:m",
         "rel_model": "commit",
-        "example": [{
-          "id": 200784599,
-          "sha": "dce1a62282a9afa59f1b9f5dd387a60285ebe6a8"
-        }]
+        "example": [
+          {
+            "id": 200784599,
+            "sha": "dce1a62282a9afa59f1b9f5dd387a60285ebe6a8"
+          }
+        ]
+      },
+      {
+        "name": "members",
+        "type": "n:m",
+        "rel_model": "user",
+        "example": [
+          {
+            "id": 335573,
+            "login": "muccc",
+            "company": null,
+            "state": "Bayern",
+            "city": "München"
+          }
+        ]
+      },
+      {
+        "name": "issues",
+        "type": "1:n",
+        "rel_model": "issue",
+        "example": [
+          {
+            "id": 14086912,
+            "created_at": "2014-12-31 15:37:31"
+          }
+        ]
       }
     ]
   },
@@ -160,6 +275,11 @@
         "type": "TextField",
         "unique": true,
         "example": "05c5c10cd2d08b8db4b6b6fbb5cc14889bc7bd14"
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "example": "2012-04-12 19:50:42"
       }
     ],
     "relations": [
@@ -191,43 +311,51 @@
         "name": "projects",
         "type": "n:m",
         "rel_model": "project",
-        "example": [{
-          "id": 67063,
-          "url": "https://api.github.com/repos/qbit/node-pushover",
-          "name": "node-pushover",
-          "description": "Pushover notifications for node.js (JavaScript,NodeJS)"
-        }]
+        "example": [
+          {
+            "id": 67063,
+            "url": "https://api.github.com/repos/qbit/node-pushover",
+            "name": "node-pushover",
+            "description": "Pushover notifications for node.js (JavaScript,NodeJS)"
+          }
+        ]
       },
       {
         "name": "children",
         "type": "n:m",
         "rel_model": "commit",
-        "example": [{
-          "id": 1128249,
-          "sha": "83bff1a1287a4943aff529b602b610c546bed8ef"
-        }]
+        "example": [
+          {
+            "id": 1128249,
+            "sha": "83bff1a1287a4943aff529b602b610c546bed8ef"
+          }
+        ]
       },
       {
         "name": "parents",
         "type": "n:m",
         "rel_model": "commit",
-        "example": [{
-          "id": 1128248,
-          "sha": "95b227f1c3221aa860ed0b8ada47de0c805a2014"
-        }]
+        "example": [
+          {
+            "id": 1128248,
+            "sha": "95b227f1c3221aa860ed0b8ada47de0c805a2014"
+          }
+        ]
       },
       {
         "name": "comments",
         "type": "1:n",
         "rel_model": "comment",
-        "example": [{
-          "id": 3311572,
-          "commit": 1128246,
-          "author": 3506082,
-          "body": "I don't understand this change.",
-          "line": 268,
-          "position": 22
-        }]
+        "example": [
+          {
+            "id": 3311572,
+            "commit": 1128246,
+            "author": 3506082,
+            "body": "I don't understand this change.",
+            "line": 268,
+            "position": 22
+          }
+        ]
       }
     ]
   },
@@ -254,6 +382,11 @@
         "name": "position",
         "type": "IntegerField",
         "example": 5
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "example": "2015-12-18 15:41:42"
       }
     ],
     "relations": [
@@ -276,6 +409,64 @@
           "company": null,
           "state": "Praha",
           "city": "Praha"
+        }
+      }
+    ]
+  },
+  {
+    "model": "issue",
+    "fields": [
+      {
+        "name": "id",
+        "type": "AutoField",
+        "primary_key": true,
+        "example": 4
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "example": "2012-01-26 15:20:54"
+      }
+    ],
+    "relations": [
+      {
+        "name": "project",
+        "type": "n:1",
+        "rel_model": "project",
+        "example": {
+          "id": 1334,
+          "url": "https://api.github.com/repos/rails/rails",
+          "name": "rails",
+          "description": "Ruby on Rails",
+          "created_at": "2008-04-11 02:19:47"
+        }
+      },
+      {
+        "name": "reporter",
+        "type": "n:1",
+        "rel_model": "user",
+        "example": {
+          "id": 26122,
+          "login": "docwhat",
+          "company": null,
+          "state": "penna",
+          "city": "PGH",
+          "location": "Pittsburgh, PA",
+          "created_at": "2008-12-16 15:41:49"
+        }
+      },
+      {
+        "name": "assignee",
+        "type": "n:1",
+        "rel_model": "user",
+        "example": {
+          "id": 26122,
+          "login": "docwhat",
+          "company": null,
+          "state": "penna",
+          "city": "PGH",
+          "location": "Pittsburgh, PA",
+          "created_at": "2008-12-16 15:41:49"
         }
       }
     ]

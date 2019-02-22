@@ -1,4 +1,4 @@
-from peewee import CompositeKey, ForeignKeyField, IntegerField, Model, TextField
+from peewee import CompositeKey, ForeignKeyField, IntegerField, Model, TextField, DateTimeField
 
 from server.database import db
 from server.model_register import ModelRegister
@@ -12,7 +12,8 @@ class User(Model):
     company = TextField()
     state = TextField()
     city = TextField()
-    location = TextField
+    location = TextField()
+    created_at = DateTimeField()
 
     class Meta:
         database = db
@@ -26,6 +27,7 @@ class Project(Model):
     name = TextField()
     description = TextField()
     forked_from = ForeignKeyField('self', column_name='forked_from', backref='forks')
+    created_at = DateTimeField()
 
     class Meta:
         database = db
@@ -37,6 +39,7 @@ class Commit(Model):
     sha = TextField(unique=True)
     author = ForeignKeyField(User, backref='authored_commits')
     committer = ForeignKeyField(User, backref='commits')
+    created_at = DateTimeField()
 
     class Meta:
         database = db
@@ -72,7 +75,41 @@ class Comment(Model):
     body = TextField()
     line = IntegerField()
     position = IntegerField()
+    created_at = DateTimeField()
 
     class Meta:
         database = db
         table_name = 'commit_comments'
+
+
+@mr.add_nm
+class ProjectMembers(Model):
+    project = ForeignKeyField(Project, column_name='repo_id', backref='members')
+    member = ForeignKeyField(User, column_name='user_id', backref='member_projects')
+
+    class Meta:
+        database = db
+        table_name = 'project_members'
+        primary_key = CompositeKey('project', 'member')
+
+
+@mr.add_nm
+class Followers(Model):
+    follower = ForeignKeyField(User, backref='follows')
+    user = ForeignKeyField(User, backref='follower')
+
+    class Meta:
+        database = db
+        primary_key = CompositeKey('follower', 'user')
+
+
+@mr.add_model
+class Issue(Model):
+    project = ForeignKeyField(Project, column_name='repo_id', backref='issues')
+    reporter = ForeignKeyField(User, backref='reported_issues')
+    assignee = ForeignKeyField(User, backref='assigned_issues')
+    created_at = DateTimeField()
+
+    class Meta:
+        database = db
+        table_name = 'issues'
