@@ -1,23 +1,39 @@
-# Basic Types #
-# =========== #
-<ModelCommand>       ::= MODEL:
-<SelectCommand>      ::= SELECT:
-<GroupCommand>       ::= GROUPBY:
-<OrderCommand>       ::= ORDERBY:
-<WhereCommand>       ::= WHERE:
-<Aggregator>         ::= SUM:|AVG:|COUNT:|MIN:|MAX:
+#### Main Commands
+<ModelCommand>       ::= 'MODEL:'
+<SelectCommand>      ::= 'SELECT:'
+<GroupCommand>       ::= 'GROUPBY:'
+<OrderCommand>       ::= 'ORDERBY:'
+<WhereCommand>       ::= 'WHERE:'
+#### Aggregation Commands:
+<SumAggregator>      ::= 'SUM:'
+<AvgAggregator>      ::= 'AVG:'
+<CountAggregator>    ::= 'COUNT:'
+<MinAggregator>      ::= 'MIN:'
+<MaxAggregator>      ::= 'MAX:'
+<Aggregator>         ::= <SumAggregator> | <AvgAggregator> | <CountAggregator> | <MinAggregator> | <MaxAggregator>
+#### Basic Types
 <Integer>            ::= -?[1-9][0-9]*
 <String>             ::= (["'])(?:(?=(\\?))\2.)*?\1
 <Identifier>         ::= [a-zA-Z][a-zA-Z0-9_]*
-<Comparator>         ::= ==|>=|<=|>|<|!=
-<LogicalOperator>    ::= AND|OR|XOR
-<LeftBracket>        ::= \(
-<RightBracket>       ::= \)
-<Dot>                ::= \.
-<Comma>              ::= ,
-
-# Combined Types #
-# ============== #
+#### Comparators
+<EqComparator>       ::= '=='
+<GeqComparator>      ::= '>='
+<LeqComparator>      ::= '<='
+<GreaterComparator>  ::= '>'
+<LessComparator>     ::= '<'
+<NeqComparator>      ::= '!='
+<Comparator>         ::= <EqComparator> | <GeqComparator> | <LeqComparator> | <GreaterComparator> | <LessComparator> | <NeqComparator>
+#### Operators
+<AndOperator>        ::= 'AND'
+<OrOperator>         ::= 'OR'
+<XorOperator>        ::= 'XOR'
+<LogicalOperator>    ::= <AndOperator> | <OrOperator> | <XorOperator>
+#### Seperators
+<LeftBracket>        ::= '('
+<RightBracket>       ::= ')'
+<Dot>                ::= '.'
+<Comma>              ::= ','
+#### Grammar
 <ModelName>          ::= <Identifier>
 <FieldName>          ::= <Identifier> (<Dot> <Identifier>)*
 
