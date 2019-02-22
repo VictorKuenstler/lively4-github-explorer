@@ -38,15 +38,15 @@ class QueryBuilder:
             if aggregator is None:
                 selections.append(selection)
             elif aggregator is parser.SumAggregator:
-                selections.append(peewee.fn.Sum(selection).alias('sum'))
+                selections.append(peewee.fn.Sum(selection).alias('sum_aggregation'))
             elif aggregator is parser.AvgAggregator:
-                selections.append(peewee.fn.Avg(selection).alias('avg'))
+                selections.append(peewee.fn.Avg(selection).alias('avg_aggregation'))
             elif aggregator is parser.CountAggregator:
-                selections.append(peewee.fn.Count(selection).alias('count'))
+                selections.append(peewee.fn.Count(selection).alias('count_aggregation'))
             elif aggregator is parser.MinAggregator:
-                selections.append(peewee.fn.Min(selection).alias('min'))
+                selections.append(peewee.fn.Min(selection).alias('min_aggregation'))
             elif aggregator is parser.MaxAggregator:
-                selections.append(peewee.fn.Max(selection).alias('max'))
+                selections.append(peewee.fn.Max(selection).alias('max_aggregation'))
 
         group_by_fields = [field.values for field in parsed_query.group_by] if parsed_query.group_by is not None else []
         order_by_fields = [field.values for field in parsed_query.order_by] if parsed_query.order_by is not None else []
