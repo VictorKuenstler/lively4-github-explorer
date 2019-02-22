@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 import os
 
@@ -25,7 +26,7 @@ def multiple_models(req, resp, model_name):
     if model_name in mr:
         model = mr[model_name]
         query = model.select().limit(1000)
-        resp.media = [model_to_dict(item, recurse=False) for item in query]
+        json_response(resp, [model_to_dict(item, recurse=False) for item in query])
     else:
         resp.status_code = api.status_codes.HTTP_404
 
@@ -37,7 +38,7 @@ def model_single(req, resp, model_name, id_):
         model = mr[model_name]
         try:
             query = model.get_by_id(id_)
-            resp.media = mr.query_dict(query, 1)
+            json_response(resp, mr.query_dict(query, 1))
             return
         except (ValueError, DoesNotExist):
             pass
@@ -107,4 +108,16 @@ def query(req, resp):
     query_builder = QueryBuilder(mr)
     query, query_tree = query_builder(cql_query)
 
-    resp.media = [generate_result_object(row, query_tree.root) for row in query]
+    json_response(resp, [generate_result_object(row, query_tree.root) for row in query])
+
+
+def json_response(resp, obj):
+    resp.headers.update({"Content-Type": "application/json"})
+    resp.content = json.dumps(obj, cls=JsonEncoder)
+
+
+class JsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return str(obj)
+        return json.JSONEncoder.default(self, obj)
