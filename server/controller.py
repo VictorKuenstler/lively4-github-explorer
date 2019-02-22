@@ -6,7 +6,7 @@ import responder
 from peewee import DoesNotExist
 from playhouse.shortcuts import model_to_dict
 
-
+from server.model_register import ModelType
 from server.models import mr
 from server.query.builder import QueryBuilder
 from server.query.result import generate_result_object
@@ -66,20 +66,20 @@ def meta(req, resp):
                 continue
 
             assert hasattr(field.rel_model, '_name')
-            assert hasattr(field.rel_model, '_type') and field.rel_model._type == 'model'
+            assert hasattr(field.rel_model, '_type') and field.rel_model._type is ModelType.MODEL
 
             rel_model = field.rel_model._name
             model_meta['relations'].append({'name': field_name, 'type': 'n:1', 'rel_model': rel_model})
         for backref, backref_model in model._meta.backrefs.items():
             assert hasattr(backref_model, '_name')
             assert hasattr(backref_model, '_type')
-            assert backref_model._type == 'model' or backref_model._type == 'nm_relation'
+            assert backref_model._type is ModelType.MODEL or backref_model._type is ModelType.NM_RELATION
 
             backref_name = backref_model._name
             backref_type = backref_model._type
 
             relation_dict = {'name': backref.backref}
-            if backref_type == 'model':
+            if backref_type is ModelType.MODEL:
                 relation_dict['type'] = '1:n'
                 relation_dict['rel_model'] = backref_name
             else:

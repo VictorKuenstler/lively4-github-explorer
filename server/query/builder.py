@@ -3,6 +3,7 @@ from enum import Enum
 import peewee
 
 from server import parser
+from server.model_register import ModelType
 from server.query.tree import QueryTree
 
 
@@ -133,7 +134,7 @@ class QueryBuilder:
             if len(field_arr) == 0:
                 return child_node.model
             return self._add_to_node(child_node, field_arr, query_command)
-        elif field_head in model_backrefs and model_backrefs[field_head].model._type == 'model':
+        elif field_head in model_backrefs and model_backrefs[field_head].model._type is ModelType.MODEL:
             # field_head is of type relation 1:n
             child_node = node.get_child(field_head)
             if not child_node:
@@ -150,7 +151,7 @@ class QueryBuilder:
             if len(field_arr) == 0:
                 return child_node.model
             return self._add_to_node(child_node, field_arr, query_command)
-        elif field_head in model_backrefs and model_backrefs[field_head].model._type == 'nm_relation':
+        elif field_head in model_backrefs and model_backrefs[field_head].model._type is ModelType.NM_RELATION:
             # field_head is of type relation n:m
             child_node = node.get_child(field_head)
             if not child_node:

@@ -1,3 +1,5 @@
+from enum import Enum
+
 from server.common import camel_to_snake
 
 
@@ -24,7 +26,7 @@ class ModelRegister:
         name = camel_to_snake(model.__name__)
 
         model._name = name
-        model._type = 'model'
+        model._type = ModelType.MODEL
 
         self._models[name] = model
         return model
@@ -37,7 +39,7 @@ class ModelRegister:
         name = camel_to_snake(nm_relation.__name__)
 
         nm_relation._name = name
-        nm_relation._type = 'nm_relation'
+        nm_relation._type = ModelType.NM_RELATION
         nm_relation._other_field = classmethod(_relation_other_field)
         nm_relation._other_field_name = classmethod(_relation_other_field_name)
 
@@ -91,11 +93,11 @@ class ModelRegister:
                 else:
                     result[field_name] = None
             for backref, backref_model in model._meta.backrefs.items():
-                if backref_model._type == 'model':
+                if backref_model._type is ModelType.MODEL:
                     # 1:n
                     relation_queries = getattr(query, backref.backref)
                     result[backref.backref] = [self.query_dict(relation_query, depth - 1) for relation_query in relation_queries]
-                elif backref_model._type == 'nm_relation':
+                elif backref_model._type is ModelType.NM_RELATION:
                     # n:m
                     relation_queries = getattr(query, backref.backref)
                     accum = []
@@ -104,3 +106,7 @@ class ModelRegister:
                         accum.append(self.query_dict(getattr(relation_query, other_field), depth - 1))
                     result[backref.backref] = accum
         return result
+
+class ModelType(Enum):
+    MODEL = 1
+    NM_RELATION = 2
